@@ -12,6 +12,34 @@ from jason.simple_oscillator_task import SimpleOscillatorTask
 from util.fitness_functions import fitness_maximize_output_change
 
 def main():
+
+    main_demo()
+    #main_sweep()
+
+
+def main_demo():
+    show_plots=True
+    #  Using these makes it more viable to evolve from scratch
+    nnsize=2
+    wb_range=16
+    learning_duration=5000
+    init_flux_amp=1
+    flux_period_min=4
+    flux_period_max= 2 * flux_period_min
+    max_flux_amp = 32
+    flux_conv_rate=0.03
+    learn_rate=1.0
+    performance_bias=0.005
+    performance_update_rate=0.001
+
+    seed=0
+    rl_nn_fit, time_passed = run_experiment(seed=seed, nnsize=nnsize, weight_range=wb_range, bias_range=wb_range, learning_duration=learning_duration,max_flux_amp=max_flux_amp,\
+                                                init_flux_amp=init_flux_amp, flux_period_min=flux_period_min, flux_period_max=flux_period_max, flux_conv_rate=flux_conv_rate, learn_rate=learn_rate,\
+                                                performance_bias=performance_bias, performance_update_rate=performance_update_rate, show_plots=show_plots )
+    print( f"rl_nn_fit:{rl_nn_fit} time_passed:{time_passed}"  )
+
+
+def main_sweep():
     learning_duration=1000
     #seeds=[3]   #,5,6,7,8,9]
     seeds=[0,1,2,3,4]
@@ -33,26 +61,27 @@ def main():
     flux_period_mins=[2] 
     
 
-    #flux_period_max=[10]
+    # flux_period_max=[10]
     # flux_conv_rates=[0.08, 0.1, 0.12]
     # learn_rates=[0.8, 1.0, 1.2]
     # performance_biases=[0.001, 0.0025, 0.005, 0.006]
     # performance_update_rates=[0.0001, 0.00025, 0.0005]
-    #flux_conv_rates=[0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01, 0.009, 0.008, 0.007, 0.006, 0.005]
+    # flux_conv_rates=[0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01, 0.009, 0.008, 0.007, 0.006, 0.005]
     flux_conv_rates=[0.1, 0.075, 0.05, 0.025, 0.01, 0.0075, 0.005]
-    #flux_conv_rates=[0.07, 0.06, 0.05, 0.04, 0.03, 0.02]
+    # flux_conv_rates=[0.07, 0.06, 0.05, 0.04, 0.03, 0.02]
     flux_conv_rates=[0.03]
 
     learn_rates=[1.0]
     performance_biases=[0.005]  #  [0.005, 0.01]
     performance_update_rates=[0.001]   #0.0005, 0.001
 
-    #performance_biases=[ 0.01]
-    #performance_update_rates=[ 0.001 ]
+    # performance_biases=[ 0.01]
+    # performance_update_rates=[ 0.001 ]
 
     line= f"seed,nnsize,wbrange,rl_nn_b_fit,time_passed,max_flux_amp,init_flux_amp,flux_period_min,flux_period_max,flux_conv_rate,learn_rate,performance_bias,performance_update_rate,"
     print(line)
     if not os.path.exists(save_filename):
+        print("File does not exist, writing to new file")
         write_to_file( save_filename, line,'w' )
     
     for nnsize in nnsizes:
@@ -79,7 +108,7 @@ def main():
 
 def run_experiment(seed=0, nnsize=2, weight_range=16, bias_range=16, learning_duration=5000, max_flux_amp=16, \
     init_flux_amp=1, flux_period_min=2, flux_period_max=10, flux_conv_rate=0.1, learn_rate=1.0,\
-    performance_bias=0.01, performance_update_rate=0.001):
+    performance_bias=0.01, performance_update_rate=0.001, show_plots=False):
     
     stop_at_convergence=False
     convergence_epsilon=0.05 #for use when stopAtConvergence is true
@@ -97,7 +126,7 @@ def run_experiment(seed=0, nnsize=2, weight_range=16, bias_range=16, learning_du
 
     # All Tasks
     stepsize=0.01
-    show_plots=False
+    
 
     rl_nn = RL_CTRNN( nnsize, weight_range=weight_range, bias_range=bias_range, tc_min=tc_min, tc_max=tc_max,\
         init_flux_amp=init_flux_amp, max_flux_amp=max_flux_amp, flux_period_min=flux_period_min, flux_period_max=flux_period_max, flux_conv_rate=flux_conv_rate, learn_rate=learn_rate,\
@@ -118,7 +147,7 @@ def run_experiment(seed=0, nnsize=2, weight_range=16, bias_range=16, learning_du
 
 def rl_ctrnn_ff( rl_ctrnn, task, show_plots=False ):
     """Simulates using the RL-CTRNN but then evaluates the final form using the more traditional fitness measure"""
-    trained_rlctrnn, plot_info, converged = task.simulate(rl_ctrnn, showPlots=show_plots)
+    trained_rlctrnn, plot_info, converged = task.simulate(rl_ctrnn, show_plots=show_plots)
     normalized_params = trained_rlctrnn.get_normalized_parameters()
     ctrnn = CTRNN(rl_ctrnn.size , weight_range=rl_ctrnn.weight_range, bias_range=rl_ctrnn.bias_range, tc_min=rl_ctrnn.tc_min, tc_max=rl_ctrnn.tc_max )
     ctrnn.set_normalized_parameters( normalized_params )

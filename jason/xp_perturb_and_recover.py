@@ -12,10 +12,8 @@ import os
 from jason.simple_oscillator_task import SimpleOscillatorTask
 from util.fitness_functions import fitness_maximize_output_change
 
-
 def main():
     main_perturb_AND_recover()
-
 
 def main_perturb_AND_recover():
     save_filename="jason/data/recovery_sweep_perturbed-fit_update-rate.csv"
@@ -30,6 +28,7 @@ def main_perturb_AND_recover():
     line="jumpsize,sol_seed,seed,nnsize,orig_fit,perturbed_fit,perturbed_fit-div-orig_fit,orig_beer_fit,perturbed_beer_fit,perturbed_beer_fit-div-orig_beer_fit,perf_bias,perf_upd_rate,recovered_fitness,timed_passed,learning_duration,recover-div-orig,"
     
     if not os.path.exists(save_filename):
+        print("File does not exist, writing to new file")
         write_to_file( save_filename, line,'w' )
         print(line)
 
@@ -58,7 +57,6 @@ def main_perturb_AND_recover():
 
 def run_recovery( norm_params, nnsize=2, weight_range=16, bias_range=16,learning_duration=2000, performance_bias=0.005, \
     performance_update_rate=0.002 ):
-
     # Parameters RL-CTRNN specific
     init_flux_amp=1
     max_flux_amp=10
@@ -82,15 +80,11 @@ def run_recovery( norm_params, nnsize=2, weight_range=16, bias_range=16,learning
     # performance_bias=0.005
     # performance_update_rate=0.002
 
-
-
     convergence_epsilon=0.05
     stop_at_convergence=True
-
     gaussian_mode=True
     # All Tasks
     stepsize=0.01
-
     tc_min=1
     tc_max=1
 
@@ -107,12 +101,9 @@ def run_recovery( norm_params, nnsize=2, weight_range=16, bias_range=16,learning
         convergence_epsilon=convergence_epsilon, performance_update_rate=performance_update_rate, performance_bias=performance_bias )
 
     nn, plot_info, converged = task.simulate(rl_nn, show_plots=False)
-
     ctrnn = CTRNN(nnsize, weight_range=weight_range, bias_range=bias_range, tc_min=tc_min, tc_max=tc_max )
     ctrnn.set_normalized_parameters( nn.get_normalized_parameters() )
-
     recovered_fitness = fitness_maximize_output_change( ctrnn) 
-
     return recovered_fitness, plot_info["timed_passed"]
     
 
