@@ -10,7 +10,7 @@ import os
 from util.fitness_functions import fitness_maximize_output_change, fitness_frequency_match
 
 
-   
+
 
 def plot_grid_freq_fit(target_period=2.5,min=-16,max=16,inc=0.1, size=2, seed=1,stepsize=0.01):
     eval_duration=50
@@ -28,6 +28,10 @@ def plot_grid_freq_fit(target_period=2.5,min=-16,max=16,inc=0.1, size=2, seed=1,
             if fit > 1.0:
                 fit = 1.0
             plt.scatter(w00,w11,color=(fit, fit, fit))
+    
+    #TODO show bias0 vs. bias1 
+    #TODO show w01 vs. w10
+    
 
 def plot_grid_max_change_no_transients_fit(min=16,max=16,inc=0.1, size=2, seed=1,stepsize=0.01):
     filename = f"data/evolved_solutions/mga_pop-20_gen-1000/ALL/discovery_mga_best_nn{size}_seed-{seed}.json"  

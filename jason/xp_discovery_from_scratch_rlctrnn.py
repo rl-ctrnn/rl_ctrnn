@@ -13,8 +13,8 @@ from util.fitness_functions import fitness_maximize_output_change
 
 def main():
 
-    main_demo()
-    #main_sweep()
+    #main_demo()
+    main_sweep()
 
 
 def main_demo():
@@ -32,33 +32,102 @@ def main_demo():
     performance_bias=0.005
     performance_update_rate=0.001
 
-    seed=0
+    stop_at_convergence=True
+
+    seed=1
     rl_nn_fit, time_passed = run_experiment(seed=seed, nnsize=nnsize, weight_range=wb_range, bias_range=wb_range, learning_duration=learning_duration,max_flux_amp=max_flux_amp,\
                                                 init_flux_amp=init_flux_amp, flux_period_min=flux_period_min, flux_period_max=flux_period_max, flux_conv_rate=flux_conv_rate, learn_rate=learn_rate,\
-                                                performance_bias=performance_bias, performance_update_rate=performance_update_rate, show_plots=show_plots )
+                                                performance_bias=performance_bias, performance_update_rate=performance_update_rate, show_plots=show_plots,stop_at_convergence=stop_at_convergence )
     print( f"rl_nn_fit:{rl_nn_fit} time_passed:{time_passed}"  )
 
 
 def main_sweep():
-    learning_duration=1000
+
+    learning_duration=20000
+    nnsizes=[10,9,8,7,6,5,4,3,2]
+    stop_at_convergence=False
+    performance_biases=[0.005]
+
+    # ####################################
+    experiment_name="SCALE_PERF-BIAS_HUGE"
+    max_flux_amps=[ 16 ]
+    flux_period_mins=[ 4 ] 
+    flux_conv_rates=[0.03, 0.05, 0.07, 0.09, 0.1 ]
+    seeds=[0,1,2,3,4,5,6,7,8,9]
+    performance_update_rates=[0.001 ]
+    performance_biases=[0.005,  0.007,  0.009, 0.01,  0.012 ]
+    # ####################################
+
+
+
+
+    # #####################################
+    # experiment_name="AMP_vs_CONVSTOP_"
+    # nnsizes=[3,4,5,6,7,8,9,10]
+    # max_flux_amps=[2,4,6,8,10,12,14,16]
+    # flux_period_mins=[4] 
+    # flux_conv_rates=[0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01]
+    # seeds=[1,2,3,4,5,6,7,8,9]
+    # performance_update_rates=[0.001]
+    # #####################################
+
+    #####################################
+    # experiment_name="PERIOD_vs_CONVSTOP_"
+    # max_flux_amps=[16]
+    # flux_period_mins=[1,2,3,4,5,6,7,8,9,10] 
+    # flux_conv_rates=[0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01]
+    # seeds=[0]
+    # performance_update_rates=[0.001]
+    #####################################
+
+    # ####################################
+    # experiment_name="PERIOD_vs_AMPSTOP_"
+    # max_flux_amps=[2,4,6,8,10,12,14,16]
+    # flux_period_mins=[1,2,3,4,5,6,7,8,9,10] 
+    # flux_conv_rates=[ 0.05 ]
+    # seeds=[1,2,3,4,5,6,7,8,9]
+    # performance_update_rates=[0.001]
+    # ####################################
+
+    # ####################################
+    # nnsizes=[3,4,5,6,7,8,9,10]
+    # experiment_name="SPREAD_10SEEDS_STOP_"
+    # max_flux_amps=[8,16]
+    # flux_period_mins=[4,8] 
+    # flux_conv_rates=[ 0.025, 0.05 ]
+    # seeds=[0,1,2,3,4,5,6,7,8,9]
+    # performance_update_rates=[0.001]
+    # ####################################
+
+
+    # ####################################
+    # experiment_name="UPDATE_vs_CONV_STOP_"
+    # max_flux_amps=[ 16]
+    # flux_period_mins=[ 4 ] 
+    # flux_conv_rates=[0.2, 0.1, 0.075, 0.05, 0.04, 0.03, 0.02, 0.01, 0.0075, 0.005, 0.0025]
+    # seeds=[1,2,3,4,5,6,7,8,9]
+    # performance_update_rates=[0.001, 0.0025, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 1.0]
+    # ####################################
+
+    
+
     #seeds=[3]   #,5,6,7,8,9]
-    seeds=[0,1,2,3,4]
-    seeds=range(0,9)
-    seeds=[0]
+    #seeds=[0,1,2,3,4]
+    #seeds=range(0,9)
+    
     
     wb_ranges=[16]
     #max_flux_amps=[8,12,16,24,32]
-    max_flux_amps=[8,16,32]
-    max_flux_amps=[8]
+    #max_flux_amps=[2,4,6,8,10,12,14,16]
+    #max_flux_amps=[8]
 
-    nnsizes=[2,3,4]
-    nnsizes=[2]
+    #nnsizes=[2,3,4,5]
+    
 
-    save_filename=f"jason/data/rl-discovery-{nnsizes}___SWEEP_single_convergencerate_AND_maxamp_{int(learning_duration/1000)}k.csv"
     init_flux_amps=[1]
     #flux_period_mins=[2,4,8,12,16,24,32]   #max = min * 2  - this ratio should be sufficient
-    flux_period_mins=[2,4,8] 
-    flux_period_mins=[2] 
+    #flux_period_mins=[3,4,5] 
+    #flux_period_mins=[4] 
     
 
     # flux_period_max=[10]
@@ -67,13 +136,14 @@ def main_sweep():
     # performance_biases=[0.001, 0.0025, 0.005, 0.006]
     # performance_update_rates=[0.0001, 0.00025, 0.0005]
     # flux_conv_rates=[0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01, 0.009, 0.008, 0.007, 0.006, 0.005]
-    flux_conv_rates=[0.1, 0.075, 0.05, 0.025, 0.01, 0.0075, 0.005]
-    # flux_conv_rates=[0.07, 0.06, 0.05, 0.04, 0.03, 0.02]
-    flux_conv_rates=[0.03]
+    #flux_conv_rates=[0.1, 0.075, 0.05, 0.025, 0.01, 0.0075, 0.005]
+    #flux_conv_rates=[0.03]
+
+    save_filename=f"jason/data/rl-discovery__{experiment_name}.csv"
 
     learn_rates=[1.0]
-    performance_biases=[0.005]  #  [0.005, 0.01]
-    performance_update_rates=[0.001]   #0.0005, 0.001
+      #  [0.005, 0.01]
+       #0.0005, 0.001
 
     # performance_biases=[ 0.01]
     # performance_update_rates=[ 0.001 ]
@@ -98,7 +168,7 @@ def main_sweep():
                                         for seed in seeds:
                                             rl_nn_fit, time_passed = run_experiment(seed=seed, nnsize=nnsize, weight_range=wb_range, bias_range=wb_range, learning_duration=learning_duration,max_flux_amp=max_flux_amp,\
                                                 init_flux_amp=init_flux_amp, flux_period_min=flux_period_min, flux_period_max=flux_period_max, flux_conv_rate=flux_conv_rate, learn_rate=learn_rate,\
-                                                performance_bias=performance_bias, performance_update_rate=performance_update_rate )
+                                                performance_bias=performance_bias, performance_update_rate=performance_update_rate, stop_at_convergence=stop_at_convergence )
                                             line= f"{seed},{nnsize},{wb_range},{rl_nn_fit},{time_passed},{max_flux_amp},{init_flux_amp},{flux_period_min},{flux_period_max},{flux_conv_rate},{learn_rate},{performance_bias},{performance_update_rate},"
                                             print(line)
                                             write_to_file( save_filename, line,'a' )
@@ -108,9 +178,8 @@ def main_sweep():
 
 def run_experiment(seed=0, nnsize=2, weight_range=16, bias_range=16, learning_duration=5000, max_flux_amp=16, \
     init_flux_amp=1, flux_period_min=2, flux_period_max=10, flux_conv_rate=0.1, learn_rate=1.0,\
-    performance_bias=0.01, performance_update_rate=0.001, show_plots=False):
+    performance_bias=0.01, performance_update_rate=0.001, show_plots=False, stop_at_convergence=False):
     
-    stop_at_convergence=False
     convergence_epsilon=0.05 #for use when stopAtConvergence is true
     # parameters for all CTRNNs
     gaussian_mode=False   #using uniform instead in order to more clearly define boundaries
