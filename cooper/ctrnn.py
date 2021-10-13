@@ -39,13 +39,26 @@ class Ctrnn:
         """Set the synaptic weight from a presynaptic to a postsynaptic neuron"""
         self.weights[pre][post] = Ranges.weights.clip(weight)
 
-    def perturb(self, change: float, rng: np.random.Generator) -> None:
-        """Slightly modify the synaptic weights of this network"""
-        range = Ranges.weights
-        direction = rng.uniform(-1, 1, size=(self.size, self.size))
-        magnitude = np.sqrt(np.sum(np.power(direction.flat, 2))) or 1
-        direction *= rng.uniform(0, change * range.max) / magnitude
-        self.weights = (self.weights + direction).clip(range.min, range.max)
+    def perturb(
+        self,
+        change: float,
+        rng: np.random.Generator,
+        weights: bool = True,
+        biases: bool = True,
+    ) -> None:
+        """Slightly modify the synaptic weights and biases of this network"""
+        if weights:
+            range = Ranges.weights
+            direction = rng.uniform(-1, 1, size=(self.size, self.size))
+            magnitude = np.sqrt(np.sum(np.power(direction.flat, 2))) or 1
+            direction *= rng.uniform(0, change * range.max) / magnitude
+            self.weights = (self.weights + direction).clip(range.min, range.max)
+        if biases:
+            range = Ranges.biases
+            direction = rng.uniform(-1, 1, size=self.size)
+            magnitude = np.sqrt(np.sum(np.power(direction.flat, 2))) or 1
+            direction *= rng.uniform(0, change * range.max) / magnitude
+            self.biases = (self.biases + direction).clip(range.min, range.max)
 
     def get_output(self, voltages: Voltage) -> np.ndarray:
         """Convert voltage values to 0-1 using sigmoid activation"""
