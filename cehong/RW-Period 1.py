@@ -1,7 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
 
-# In[32]:
 
 
 import os
@@ -11,8 +8,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from Utilities import *
 
-
-# In[ ]:
 
 
 nn = CTRNN(2, weight_range=weight_range, bias_range=bias_range, tc_min=tc_min, tc_max=tc_max)
@@ -85,10 +80,6 @@ results = results.astype('float64')
 results.to_csv('./result_of_random_walker_period1_step_150.csv')
 
 
-# In[38]:
-
-
-results = pd.read_csv('./result_of_random_walker_period1_step_150.csv')
 gp = results.groupby(by = ['Ratio','clip_change_max','jump_size'])
 print(gp.mean().sort_values('Fitness',ascending=False).head(10))
 
