@@ -102,12 +102,12 @@ class RL_CTRNN( CTRNN ):
         # Reward positive => amp decreases.    Reward negative => amp increases
         # Shift amplitude by percentage of the current self.max_flux_amp   multipled by the reward
         #                               0.1  *     10.0          *  generally small value
-        self.flux_amp -= self.flux_conv_rate * self.max_flux_amp * reward
+        self.flux_amp -= self.flux_conv_rate * reward
         self.flux_amp = min( max(self.flux_amp, 0), self.max_flux_amp )   # Keep fluctation amplitude between 0 and max_flux_amp (10)
         # 0 at center, +1 above center, -1, below center
 
         if self.bias_flux_mode:
-            self.bias_flux_amp -= self.bias_flux_conv_rate * self.bias_max_flux_amp * reward
+            self.bias_flux_amp -= self.bias_flux_conv_rate * reward
             self.bias_flux_amp = min( max(self.bias_flux_amp, 0), self.bias_max_flux_amp )   # Keep fluctation amplitude between 0 and max_flux_amp (10)
         
         if not self.square_oscillation_mode:

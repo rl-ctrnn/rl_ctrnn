@@ -13,8 +13,9 @@ from util.fitness_functions import fitness_maximize_output_change
 
 def main():
 
-    #main_demo()
-    main_sweep()
+    main_demo()
+    #main_sweep()
+    #main_time_series_sweep()
 
 
 def main_demo():
@@ -26,30 +27,99 @@ def main_demo():
     init_flux_amp=1
     flux_period_min=4
     flux_period_max= 2 * flux_period_min
-    max_flux_amp = 32
-    flux_conv_rate=0.03
+    max_flux_amp = 8
+    flux_conv_rate=0.5  #003
     learn_rate=1.0
     performance_bias=0.005
     performance_update_rate=0.001
 
-    stop_at_convergence=True
+    stop_at_convergence=False
 
     seed=1
-    rl_nn_fit, time_passed = run_experiment(seed=seed, nnsize=nnsize, weight_range=wb_range, bias_range=wb_range, learning_duration=learning_duration,max_flux_amp=max_flux_amp,\
+    rl_nn_fit, plot_info, converged = run_experiment(seed=seed, nnsize=nnsize, weight_range=wb_range, bias_range=wb_range, learning_duration=learning_duration,max_flux_amp=max_flux_amp,\
                                                 init_flux_amp=init_flux_amp, flux_period_min=flux_period_min, flux_period_max=flux_period_max, flux_conv_rate=flux_conv_rate, learn_rate=learn_rate,\
                                                 performance_bias=performance_bias, performance_update_rate=performance_update_rate, show_plots=show_plots,stop_at_convergence=stop_at_convergence )
+    time_passed= plot_info["time_passed"]
     print( f"rl_nn_fit:{rl_nn_fit} time_passed:{time_passed}"  )
+
+
+def main_time_series_sweep():
+    show_plots=False
+    #  Using these makes it more viable to evolve from scratch
+    nnsize=2
+    wb_range=16
+    learning_duration=5000
+    init_flux_amp=1
+    flux_period_min=4
+    flux_period_max= 2 * flux_period_min
+    max_flux_amp = 8
+    flux_conv_rate=0.02  #003
+    learn_rate=1.0
+    performance_bias=0.005
+    performance_update_rate=0.001
+
+    stop_at_convergence=False
+
+    seed=2
+    flux_amps={}
+    times={}
+    performances={}
+    running_average_performances={}
+    for flux_conv_rate in [0.25, 0.5, 1, 1.5, 2, 3, 4  ]:
+        label=f"flux-conv-{flux_conv_rate}"
+        rl_nn_fit, plot_info, converged = run_experiment(seed=seed, nnsize=nnsize, weight_range=wb_range, bias_range=wb_range, learning_duration=learning_duration,max_flux_amp=max_flux_amp,\
+                                                init_flux_amp=init_flux_amp, flux_period_min=flux_period_min, flux_period_max=flux_period_max, flux_conv_rate=flux_conv_rate, learn_rate=learn_rate,\
+                                                performance_bias=performance_bias, performance_update_rate=performance_update_rate, show_plots=show_plots,stop_at_convergence=stop_at_convergence )
+        flux_amps[ label ] = plot_info["amps"]
+        times[ label ] = plot_info["time"]
+        performances[ label ] = plot_info["performances"]
+        running_average_performances[ label ] = plot_info["running_average_performances"]
+        time_passed= plot_info["time_passed"]
+        print( f"rl_nn_fit:{rl_nn_fit} time_passed:{time_passed}"  )
+    
+
+    plt.xlabel("Time")
+    plt.ylabel("Fluctuation Amplitude")
+    for key in flux_amps.keys():
+        time=times[key]
+        amps=flux_amps[key]
+        plt.plot(time,amps,label=f"{key}" )
+        #plt.plot(time[0:stop_step],plot_info["amps"][0:stop_step]/highestAmp/100,label="flux amplitude/{:.2f} for scaling".format(highestAmp*100) )
+ 
+    plt.legend()
+    plt.title("Flux Amps by Convergence Rate")
+    plt.show()
+    ###########################  performance
+    plt.xlabel("Time")
+    plt.ylabel("Running Average Performance")
+    for key in flux_amps.keys():
+        time=times[key]
+        ave_perf=running_average_performances[key]
+        plt.plot(time,ave_perf,label=f"{key}" )
+        #post processing to find running average
+        window100=[]
+        #for ind_ave_perf in running_average_performances[key]:
+
+
+        #plt.plot(time[0:stop_step],plot_info["amps"][0:stop_step]/highestAmp/100,label="flux amplitude/{:.2f} for scaling".format(highestAmp*100) )
+ 
+    plt.legend()
+    plt.title("Running Average Performance by Convergence Rate")
+    plt.show()
+
+
+
 
 
 def main_sweep():
 
     learning_duration=20000
-    nnsizes=[10,9,8,7,6,5,4,3,2]
+    nnsizes=[2,3,4,5,6,7,8,9,10]
     stop_at_convergence=False
     performance_biases=[0.005]
 
     # ####################################
-    experiment_name="SCALE_PERF-BIAS_HUGE"
+    experiment_name="SCALE_PERF-BIAS_HUGE_[2-10]"
     max_flux_amps=[ 16 ]
     flux_period_mins=[ 4 ] 
     flux_conv_rates=[0.03, 0.05, 0.07, 0.09, 0.1 ]
@@ -166,9 +236,10 @@ def main_sweep():
                                 for max_flux_amp in max_flux_amps:
                                     for wb_range in wb_ranges:
                                         for seed in seeds:
-                                            rl_nn_fit, time_passed = run_experiment(seed=seed, nnsize=nnsize, weight_range=wb_range, bias_range=wb_range, learning_duration=learning_duration,max_flux_amp=max_flux_amp,\
+                                            rl_nn_fit, plot_info, converged = run_experiment(seed=seed, nnsize=nnsize, weight_range=wb_range, bias_range=wb_range, learning_duration=learning_duration,max_flux_amp=max_flux_amp,\
                                                 init_flux_amp=init_flux_amp, flux_period_min=flux_period_min, flux_period_max=flux_period_max, flux_conv_rate=flux_conv_rate, learn_rate=learn_rate,\
                                                 performance_bias=performance_bias, performance_update_rate=performance_update_rate, stop_at_convergence=stop_at_convergence )
+                                            time_passed= plot_info["time_passed"]
                                             line= f"{seed},{nnsize},{wb_range},{rl_nn_fit},{time_passed},{max_flux_amp},{init_flux_amp},{flux_period_min},{flux_period_max},{flux_conv_rate},{learn_rate},{performance_bias},{performance_update_rate},"
                                             print(line)
                                             write_to_file( save_filename, line,'a' )
@@ -209,9 +280,9 @@ def run_experiment(seed=0, nnsize=2, weight_range=16, bias_range=16, learning_du
     
    
     rl_nn.randomize_parameters_with_seed(seed)
-    rl_nn_fit, time_passed = rl_ctrnn_ff( rl_nn, task, show_plots=show_plots )
+    rl_nn_fit, plot_info, converged = rl_ctrnn_ff( rl_nn, task, show_plots=show_plots )
    
-    return rl_nn_fit, time_passed
+    return rl_nn_fit, plot_info, converged
 
 
 def rl_ctrnn_ff( rl_ctrnn, task, show_plots=False ):
@@ -221,7 +292,7 @@ def rl_ctrnn_ff( rl_ctrnn, task, show_plots=False ):
     ctrnn = CTRNN(rl_ctrnn.size , weight_range=rl_ctrnn.weight_range, bias_range=rl_ctrnn.bias_range, tc_min=rl_ctrnn.tc_min, tc_max=rl_ctrnn.tc_max )
     ctrnn.set_normalized_parameters( normalized_params )
     fitness = fitness_maximize_output_change( ctrnn) 
-    return fitness, plot_info["timed_passed"]
+    return fitness, plot_info, converged
 
 
 def write_to_file(save_filename, line, flag='a'):

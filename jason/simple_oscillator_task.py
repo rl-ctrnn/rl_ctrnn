@@ -50,7 +50,10 @@ class SimpleOscillatorTask():
             + self.performance_update_rate * performance
         return performance
 
-    def simulate(self, nn, show_plots = False ):
+    def simulate(self, nn, show_plots = False, record_data = True):
+        if show_plots:
+            record_data=True #cannot show unless recorded
+
         size = nn.size
         stepsize = self.stepsize
 
@@ -72,7 +75,9 @@ class SimpleOscillatorTask():
         #track information to be used for plotting later
         plot_info={}
         
-        if show_plots:
+        if record_data:
+            # time passed to use for plotting
+            plot_info["time"] = time
             # amplitude of fluctuation at each timestep of sim
             plot_info["amps"] = np.zeros(len(time) )
             # underlying true centers of weights of each synaptic connection (A->B) at each timestep of sim
@@ -104,7 +109,7 @@ class SimpleOscillatorTask():
             self.outputs[self.step] = nn.outputs
             self.running_average_performances[self.step] = self.running_average_performances[self.step-1] * (1-self.performance_update_rate) + self.performance_update_rate * self.performances[self.step]
             
-            if show_plots:
+            if record_data:
                 plot_info["weights"][self.step] = nn.inner_weights
                 plot_info["flux_weights"][self.step] = nn.calc_inner_weights_with_flux()
                 plot_info["rewards"][self.step] = reward
@@ -122,7 +127,7 @@ class SimpleOscillatorTask():
                 break
         #END OF SIMULATION
 
-        if show_plots:
+        if record_data:
             #switch the dimensions for easier plotting
             plot_info["outputs"] = self.outputs.transpose(1,0)
             plot_info["weights"] = plot_info["weights"].transpose(1,2,0)
@@ -132,18 +137,48 @@ class SimpleOscillatorTask():
                 plot_info["biases"] = plot_info["biases"].transpose(1,0)
                 plot_info["flux_biases"] = plot_info["flux_biases"].transpose(1,0)
 
-            self.plot(plot_info, time, stop_step)
-        #end if show_plots 
+            plot_info["running_average_performances"] = self.running_average_performances
+            plot_info["performances"] = self.performances
+
+            if show_plots:
+                self.plot(plot_info, time, stop_step)
+        #end if record_data 
         
         converged = t < time[-1]
 
-        plot_info["timed_passed"]=t
+        plot_info["time_passed"]=t
 
         return nn, plot_info, converged
 
     # stopStep provided because we only want to plot as long as the experiment ran
     def plot(self, plot_info, time, stop_step, reduce_plot_data=100):
         nnsize = len(plot_info["outputs"])
+
+
+        plt.xlabel("Time")
+        plt.ylabel("Performance")
+        if reduce_plot_data == None:
+            plt.plot(time[0:stop_step],plot_info["rewards"][0:stop_step],label="instantaenous reward" )
+            plt.plot(time[0:stop_step],plot_info["performances"][0:stop_step],label="instantaenous performance" )
+            plt.plot(time[0:stop_step],plot_info["running_average_performances"][0:stop_step],label="running average performance" )
+            highestAmp = np.max(plot_info["amps"] )
+            plt.plot(time[0:stop_step],plot_info["amps"][0:stop_step]/highestAmp/100,label="flux amplitude/{:.2f} for scaling".format(highestAmp*100) )
+        else:
+            plt.plot(time[0:stop_step][0::reduce_plot_data],plot_info["rewards"][0:stop_step][0::reduce_plot_data],label="instantaenous reward" )
+            plt.plot(time[0:stop_step][0::reduce_plot_data],plot_info["performances"][0:stop_step][0::reduce_plot_data],label="instantaenous performance" )
+            plt.plot(time[0:stop_step][0::reduce_plot_data],plot_info["running_average_performances"][0:stop_step][0::reduce_plot_data],label="running average performance" )
+            highestAmp = np.max(plot_info["amps"] )
+            plt.plot(time[0:stop_step][0::reduce_plot_data],plot_info["amps"][0:stop_step][0::reduce_plot_data]/(highestAmp*100),label="flux amplitude/{:.2f} for scaling".format(highestAmp*100) )
+
+
+
+        plt.legend()
+        plt.title("Fluctuation Amplitude, Instantaneous and Running Average Performance over Time")
+        plt.show()
+
+
+
+
        
         #plot output of each neuron
         for i in range( nnsize ):
