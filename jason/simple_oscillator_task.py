@@ -50,8 +50,8 @@ class SimpleOscillatorTask():
             + self.performance_update_rate * performance
         return performance
 
-    def simulate(self, nn, show_plots = False, record_data = True):
-        if show_plots:
+    def simulate(self, nn, ignore_transients=50, show_plots = False, show_subplots=False, record_data=True, save_data_filename=None, save_nn_snapshots=None, ctrnn_save_directory=None):
+        if show_plots or show_subplots:
             record_data=True #cannot show unless recorded
 
         size = nn.size
@@ -96,12 +96,21 @@ class SimpleOscillatorTask():
             #This steps the reward at 0 (no change in output)
             if self.step == 0:
                 self.outputs[-1] = nn.outputs
+            
+
+            if not save_nn_snapshots == None:
+                if t in save_nn_snapshots:
+                    nn.save_json( f"{ctrnn_save_directory}time-{t}.json")
+
 
             nn.step(stepsize)
 
             #calculate reward by passing nn, info dict, and stepsize
             reward = self.reward_func(nn)
 
+            if t < ignore_transients:
+                reward = 0
+            
             #this should always happen to be consistent
             nn.update_weights_and_flux_amp_with_reward( reward )
 
@@ -142,13 +151,62 @@ class SimpleOscillatorTask():
 
             if show_plots:
                 self.plot(plot_info, time, stop_step)
+            if show_subplots:
+                self.subplots(plot_info, time, stop_step)
         #end if record_data 
         
         converged = t < time[-1]
 
         plot_info["time_passed"]=t
 
+        if not save_data_filename == None:
+            self.save_plot_info( plot_info, nn.size, nn.bias_flux_mode, save_data_filename )
+
         return nn, plot_info, converged
+    
+    def save_plot_info(self, plot_info, nn_size, nn_bias_flux_mode, filename ):
+        keys=plot_info.keys()
+        header="time,amps,rewards,performances,running_average_performances,"
+        for i in range(nn_size):
+            header+=f"output{i},"
+        for i in range(nn_size):
+            for j in range(nn_size):
+                header+=f"w{i}_{j},"
+        for i in range(nn_size):
+            for j in range(nn_size):
+                header+=f"flux_w{i}_{j},"
+        if nn_bias_flux_mode:
+            for i in range(nn_size):
+                header+=f"bias{i},"
+            for i in range(nn_size):
+                header+=f"flux_bias{i},"
+        # for i in range(nn_size):
+        #     header+=f"tc{i},"
+       
+        write_to_file(filename, header, 'w' )
+        for t in range(len(plot_info["time"])):
+            
+            line=f'{plot_info["time"][t]},{plot_info["amps"][t]},{plot_info["rewards"][t]},{plot_info["performances"][t]},{plot_info["running_average_performances"][t]},'
+            for i in range(nn_size):
+                line+=f'{plot_info["outputs"][i][t]},'
+            
+            for i in range(nn_size):
+                for j in range(nn_size):
+                    line+=f'{plot_info["weights"][i][j][t]},'
+            for i in range(nn_size):
+                for j in range(nn_size):
+                    line+=f'{plot_info["flux_weights"][i][j][t]},'
+            if nn_bias_flux_mode:
+                for i in range(nn_size):
+                    line+=f'{plot_info["biases"][i][t]},'
+                for i in range(nn_size):
+                    line+=f'{plot_info["flux_biases"][i][t]},'
+            # for i in range(nn_size):
+            #     line+=f'{plot_info["outputs"][i][t]},'
+
+            write_to_file(filename, line, 'a' )
+
+
 
     # stopStep provided because we only want to plot as long as the experiment ran
     def plot(self, plot_info, time, stop_step, reduce_plot_data=100):
@@ -259,3 +317,152 @@ class SimpleOscillatorTask():
             plt.legend()
             plt.title("Fluctating Biases over time")
             plt.show()
+    
+    
+    def subplots(self, plot_info, time, stop_step, reduce_plot_data=100):
+        nnsize = len(plot_info["outputs"])
+
+
+
+        rows=2
+        if "biases" in plot_info.keys():
+            rows+=1
+
+        cols=3
+        fig, axs = plt.subplots(rows, cols)
+        subplot_index=1
+
+        #ax1.set_xlim(0,1)
+        #ax1.set_ylim(0,1)
+##############################
+        ax1 = plt.subplot(rows, cols, subplot_index)
+
+        #plt.xlabel("Time")
+        #plt.ylabel("Performance")
+        if reduce_plot_data == None:
+            ax1.plot(time[0:stop_step],plot_info["rewards"][0:stop_step],label="instantaenous reward" )
+            ax1.plot(time[0:stop_step],plot_info["performances"][0:stop_step],label="instantaenous performance" )
+            ax1.plot(time[0:stop_step],plot_info["running_average_performances"][0:stop_step],label="running average performance" )
+            #highestAmp = np.max(plot_info["amps"] )
+            ax1.plot(time[0:stop_step],plot_info["amps"][0:stop_step],label="flux amplitude" )
+            ax1.set_ylim(0,8)
+        else:
+            ax1.plot(time[0:stop_step][0::reduce_plot_data],plot_info["rewards"][0:stop_step][0::reduce_plot_data],label="instantaenous reward" )
+            ax1.plot(time[0:stop_step][0::reduce_plot_data],plot_info["performances"][0:stop_step][0::reduce_plot_data],label="instantaenous performance" )
+            ax1.plot(time[0:stop_step][0::reduce_plot_data],plot_info["running_average_performances"][0:stop_step][0::reduce_plot_data],label="running average performance" )
+            #highestAmp = np.max(plot_info["amps"] )
+            ax1.plot(time[0:stop_step][0::reduce_plot_data],plot_info["amps"][0:stop_step][0::reduce_plot_data],label="flux amplitude" )
+            ax1.set_ylim(0,8)
+
+
+        ax1.legend()
+        ax1.set_title("Fluctuation Amplitude, Instantaneous and Running Average Performance over Time")
+###########################
+        subplot_index+=1
+        ax1 = plt.subplot(rows, cols, subplot_index)
+
+       
+        #plot output of each neuron
+        for i in range( nnsize ):
+            #if reduce_plot_data == None:
+            ax1.plot(time[0:stop_step],plot_info["outputs"][i][0:stop_step],label=i, alpha=0.5 )
+            #else:
+            #    plt.plot(time[0:stop_step][0::reduce_plot_data],plot_info["outputs"][i][0:stop_step][0::reduce_plot_data],label=i, alpha=0.5 )
+            
+        #plt.xlabel("Time")
+        #plt.ylabel("Output")
+        ax1.legend()
+        ax1.set_title("Neural activity")
+###################################
+        subplot_index+=1
+        ax1 = plt.subplot(rows, cols, subplot_index)
+        
+        if reduce_plot_data == None:
+            ax1.plot(time[0:stop_step],plot_info["rewards"][0:stop_step],label="instantaenous reward" )
+        else:
+            ax1.plot(time[0:stop_step][0::reduce_plot_data],plot_info["rewards"][0:stop_step][0::reduce_plot_data],label="instantaenous reward" )
+      
+        #divided by (10 normally) so as to keep the vertical scale compressed (otherwise hard to see the other factors)
+        #highestAmp = np.max(plot_info["amps"] )
+        ax1.plot(time[0:stop_step],plot_info["amps"][0:stop_step],label="flux amplitude" )
+        ax1.plot(time[0:stop_step],self.running_average_performances[0:stop_step],label="running average (100 steps) rewards" )
+
+        #plt.xlabel("Time")
+        #plt.ylabel("Reward & Flux")
+        ax1.legend()
+        ax1.set_title("Reward")
+        #plt.show()
+###################################
+        subplot_index+=1
+        ax1 = plt.subplot(rows, cols, subplot_index)
+
+
+        # Plot Synaptic Weights over time
+        for i in range(nnsize):
+            for j in range(nnsize):
+                if reduce_plot_data == None:
+                    ax1.plot(time[0:stop_step],plot_info["weights"][i][j][0:stop_step],label="{}->{}".format(i,j) )
+                else:
+                    ax1.plot(time[0:stop_step][0::reduce_plot_data],plot_info["weights"][i][j][0:stop_step][0::reduce_plot_data],label="{}->{}".format(i,j) )
+
+
+        #plt.xlabel("Time")
+        #plt.ylabel("Weight Centers")
+        ax1.legend()
+        ax1.set_title("Synaptic Centers Strength over time")
+        #plt.show()
+
+###################################
+        subplot_index+=1
+        ax1 = plt.subplot(rows, cols, subplot_index)
+
+        # Plot Synaptic Weights over time
+        for i in range(nnsize):
+            for j in range(nnsize):
+                if reduce_plot_data == None:
+                    ax1.plot(time[0:stop_step],plot_info["flux_weights"][i][j][0:stop_step],label="{}->{}".format(i,j) )
+                else:
+                    ax1.plot(time[0:stop_step][0::reduce_plot_data],plot_info["flux_weights"][i][j][0:stop_step][0::reduce_plot_data],label="{}->{}".format(i,j) )
+
+        #plt.xlabel("Time")
+        #plt.ylabel("Fluctating Weights")
+        ax1.legend()
+        ax1.set_title("Fluctating Weights over time")
+
+        
+
+###################################
+        subplot_index+=1
+        ax1 = plt.subplot(rows, cols, subplot_index)
+
+
+        if "biases" in plot_info.keys():
+            # Plot Biases over time
+            for i in range(nnsize):
+                plt.plot(time[0:stop_step],plot_info["biases"][i][0:stop_step],label="bias{}".format(i) )
+
+
+            plt.xlabel("Time")
+            plt.ylabel("Bias Centers")
+            plt.legend()
+            plt.title("Bias Centers  over time")
+            plt.show()
+        if "flux_biases" in plot_info.keys():
+            # Plot Synaptic Weights over time
+            for i in range(nnsize):
+                plt.plot(time[0:stop_step],plot_info["flux_biases"][i][0:stop_step],label="bias{}".format(i) )
+
+
+            plt.xlabel("Time")
+            plt.ylabel("Fluctating Biases")
+            plt.legend()
+            plt.title("Fluctating Biases over time")
+            plt.show()
+
+
+        plt.show()
+
+def write_to_file(save_filename, line, flag='a'):
+    with open( save_filename, flag) as filehandle:
+        filehandle.write( line+"\n" )
+    filehandle.close()
