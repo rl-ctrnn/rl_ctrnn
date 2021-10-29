@@ -21,6 +21,12 @@ THREAD_COUNT = 10
 BOUNDS = 16.0
 STEP = 0.25
 PROGENITOR = Ctrnn()
+PROGENITOR.set_bias(0, -2.75)
+PROGENITOR.set_bias(1, -1.75)
+PROGENITOR.set_weight(0, 0, 4.5)
+PROGENITOR.set_weight(0, 1, -1)
+PROGENITOR.set_weight(1, 0, 1)
+PROGENITOR.set_weight(1, 1, 4.5)
 WEIGHT_A = (0, 1)
 WEIGHT_B = (1, 0)
 LOG_OUTPUT = True
