@@ -17,14 +17,13 @@ Weight: TypeAlias = tuple[int, int]
 Datum: TypeAlias = tuple[float, float, float]
 Param: TypeAlias = tuple[float, float]
 
-
 THREAD_COUNT = 10
 BOUNDS = 16.0
-STEP = 4
+STEP = 0.25
 PROGENITOR = Ctrnn()
 WEIGHT_A = (0, 1)
 WEIGHT_B = (1, 0)
-DEBUG = True
+LOG_OUTPUT = True
 
 
 def get_sweep(step: float = STEP, bounds: float = BOUNDS) -> List[Param]:
@@ -45,7 +44,7 @@ def main(param: Param) -> Datum:
     ctrnn.weights[WEIGHT_B] = param[1]
     fitness = get_beers_fitness(ctrnn)
     datum = (param[0], param[1], fitness)
-    if DEBUG:
+    if LOG_OUTPUT:
         print(f"{datum[0]},{datum[1]},{datum[2]}")
     return datum
 
