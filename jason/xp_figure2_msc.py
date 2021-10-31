@@ -23,9 +23,9 @@ def main():
 
 def get_config():
     
-    init_flux=4
+    init_flux=3
     learning_duration=5000
-    prefix="v1_12x12x6"
+    prefix="v1_plusminus8_by2"
     save_filename=f"jason/figure2/{prefix}_fig2_data_{learning_duration/1000}k_initflux-{init_flux}.csv"
     save_dat_filename=f"jason/figure2/{prefix}_fig2_{learning_duration/1000}k_initflux-{init_flux}.dat"
     performance_bias=0.01   #0.03
@@ -53,20 +53,21 @@ def run_sweep():
     w11s=[ 2,   3,   4, 5, 6  ]  #+/- 2  4
 
     #close range within
-    adj=3
-    w00s= range(6-adj,6+adj+1,1)
-    w01s= range(16,16-adj-1,-1)
-    w10s= range(-16,-16+adj+1, 1)
-    w11s= range(4-adj,4+adj+1,1)
+    adj=8
+    adj_inc=2
+    w00s= range(6-adj,6+adj+1,adj_inc)
+    w01s= range(16,16-adj-1,-adj_inc)
+    w10s= range(-16,-16+adj+1, adj_inc)
+    w11s= range(4-adj,4+adj+1,adj_inc)
 
     #general sweep
-    w00s= range(-12, 13, 6)
-    w01s= range(-12, 13, 6)
-    w10s= range(-12, 13, 6)
-    w11s= range(-12, 13, 6)
+    # w00s= range(-12, 13, 6)
+    # w01s= range(-12, 13, 6)
+    # w10s= range(-12, 13, 6)
+    # w11s= range(-12, 13, 6)
 
 
-    THREAD_COUNT=4
+    THREAD_COUNT=10
     p = Pool(THREAD_COUNT)
 
     sweep = get_sweep( w00s, w01s, w10s, w11s)

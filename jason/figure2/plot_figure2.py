@@ -74,9 +74,9 @@ legend_array=['much worse', 'worse', 'no change', 'better', 'much better']
 #     500, 2000
 # learning_duration=5000
 # initflux=2
-init_flux=1
-learning_duration=1000
-prefix="v1_12x12x4"
+init_flux=3
+learning_duration=5000
+prefix="v1_plusminus8_by2"
 save_dat_filename=f"{prefix}_fig2_{learning_duration/1000}k_initflux-{init_flux}.dat"
 
 plot_save_filename=f"plots/{prefix}_fig2_{learning_duration/1000}k_initflux-{init_flux}"
@@ -87,7 +87,7 @@ data = np.genfromtxt(save_dat_filename,delimiter=",", dtype=float)
 
 cmap = plt.cm.gnuplot
 cmap = plt.cm.PiYG
-cmap = plt.cm.turbo
+cmap = plt.cm.Spectral
 custom_lines = [Line2D([0], [0], color=cmap(0.), lw=4),
                 Line2D([0], [0], color=cmap(.25), lw=4), 
                 Line2D([0], [0], color=cmap(.5), lw=4),

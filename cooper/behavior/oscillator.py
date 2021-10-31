@@ -5,7 +5,7 @@ from cooper.behavior import Behavior
 
 
 class Oscillator(Behavior):
-    history: deque[float]
+    #history: deque[float]
 
     def setup(self, state: np.ndarray):
         self.avg_count = int(self.window / self.dt)
