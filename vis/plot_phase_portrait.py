@@ -102,19 +102,22 @@ def plot_max_change_no_transients_fitness(inc=0.25, stepsize=0.01, size=2, seeds
         if show_plots:
             plt.show()
 
-seeds=[0]
+seeds=[6]
 #incs=[ 0.2, 0.1]
-incs=[0.2]
+incs=[1,0.5, 0.2]
 #eval_durations=[1,2,3,4,5,6,7,8,9,10]
-eval_durations=[1,2,4,8,10]
+eval_durations=[10]
 #target_periods=[0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 7, 8, 9, 10]
 #target_periods=[1, 2, 4, 8 ]
-target_periods=[ 1,2,3,4 ]
+#target_periods=[ 1,2,3,4 ]
 
 for inc in incs:
     show_plots=False
     plot_max_change_fitness(inc=inc,seeds=seeds, durations=eval_durations, show_plots=show_plots)
-    plot_freq_fitness(inc=inc,seeds=seeds, target_periods=target_periods, show_plots=show_plots)
-    plot_max_change_no_transients_fitness(inc=inc,seeds=seeds, show_plots=show_plots)
+    #plot_freq_fitness(inc=inc,seeds=seeds, target_periods=target_periods, show_plots=show_plots)
+    
 
+for inc in incs:
+    show_plots=False
+    plot_max_change_no_transients_fitness(inc=inc,seeds=seeds, show_plots=show_plots)
 

@@ -12,24 +12,107 @@ import os
 from jason.simple_oscillator_task import SimpleOscillatorTask
 from util.fitness_functions import fitness_maximize_output_change
 
+from tqdm.contrib.concurrent import process_map
+
+from multiprocessing import Pool
+
 def main():
-    main_perturb_AND_recover()
+    run_sweep()
+    #main_perturb_AND_recover()
 
 
-def main_perturb_AND_recover():
-
-    vals=[-16,-12,-8, -4, 0, 4, 8, 12, 16]
-
-    w00s=[0,1,2,3, 4, 5, 6, 7, 8, 9, 10,11,12]  #+/- 2   6
-    w01s=[16, 15, 14, 13, 12, 11, 10, 9, 8]     #+/- 2 
-    w10s=[-16, -15, -14, -13, -12,  -11, -10, -9, -8]  #+/- 2
-    w11s=[-2,-10,1, 2, 3, 4, 5, 6, 7, 8,9,10]  #+/- 2  4
-
+def get_config():
     
-    w00s=vals
-    w01s=vals
-    w10s=vals
-    w11s=vals
+    init_flux=4
+    learning_duration=5000
+    prefix="v1_12x12x6"
+    save_filename=f"jason/figure2/{prefix}_fig2_data_{learning_duration/1000}k_initflux-{init_flux}.csv"
+    save_dat_filename=f"jason/figure2/{prefix}_fig2_{learning_duration/1000}k_initflux-{init_flux}.dat"
+    performance_bias=0.01   #0.03
+    performance_update_rate=0.001  #0.05   0.03
+    flux_convergence= 1.5  #1.5
+    performance_bias=0.05           #0.03
+    performance_update_rate=0.001   #0.05   0.03
+    running_window_mode=True
+    running_window_size=2000   # 2000 = 20 seconds ~= 0.001
+    ignore_transients=100  #20
+    ###########################
+
+
+    return init_flux, learning_duration, save_filename, save_dat_filename, performance_bias, performance_update_rate,\
+         flux_convergence, performance_bias, performance_update_rate, running_window_mode, running_window_size, ignore_transients
+
+
+
+def run_sweep():
+
+    #plusminus 2
+    w00s=[ 4,   5,   6, 7, 8 ]  #+/- 2   6
+    w01s=[16,  15,  14]     #+/- 2 
+    w10s=[-16,-15, -14 ]  #+/- 2
+    w11s=[ 2,   3,   4, 5, 6  ]  #+/- 2  4
+
+    #close range within
+    adj=3
+    w00s= range(6-adj,6+adj+1,1)
+    w01s= range(16,16-adj-1,-1)
+    w10s= range(-16,-16+adj+1, 1)
+    w11s= range(4-adj,4+adj+1,1)
+
+    #general sweep
+    w00s= range(-12, 13, 6)
+    w01s= range(-12, 13, 6)
+    w10s= range(-12, 13, 6)
+    w11s= range(-12, 13, 6)
+
+
+    THREAD_COUNT=4
+    p = Pool(THREAD_COUNT)
+
+    sweep = get_sweep( w00s, w01s, w10s, w11s)
+    init_flux, learning_duration, save_filename, save_dat_filename, performance_bias, performance_update_rate, \
+        flux_convergence, performance_bias, performance_update_rate, running_window_mode, running_window_size, ignore_transients = get_config()
+   
+    
+    
+    line="init_fit,final_fit,init_est_dist,final_est_dist,"
+    line+="init_w00,init_w01,init_w10,init_w11,"
+    line+="final_w00,final_w01,final_w10,final_w11,"
+    # for i in range(learning_duration+1):
+    #     line+=f"ARP{i},"
+    
+    if not os.path.exists(save_filename):
+        print("File does not exist, writing to new file")
+        write_to_file( save_filename, line,'w' )
+        write_to_file( save_dat_filename, "",'w' )   #make sure file is created
+    print( len(sweep) )
+    sweep = get_sweep(w00s, w01s, w10s, w11s)
+    r = process_map(main_recover, sweep, max_workers=THREAD_COUNT, chunksize=1)
+    #data = p.map(main_recover, sweep )
+
+
+def get_sweep( w00s, w01s, w10s, w11s):
+    params = []
+    for w00 in w00s:
+        for w01 in w01s:
+            for w10 in w10s:
+                for w11 in w11s:
+                    params.append((w00, w01, w10, w11))
+    
+    return params
+
+
+
+def main_recover( params ):
+
+    init_flux, learning_duration, save_filename, save_dat_filename, performance_bias, performance_update_rate, \
+        flux_convergence, performance_bias, performance_update_rate, running_window_mode, running_window_size, ignore_transients = get_config()
+    
+
+    w00s=[params[0]]
+    w01s=[params[1]]
+    w10s=[params[2]]
+    w11s=[params[3]]
 
     weight_range=16
     bias_range=16
@@ -37,28 +120,15 @@ def main_perturb_AND_recover():
     tc_max=1
 
 
-    ignore_transients=100  #20
-
     show_plots=False
     show_subplots=False
     seed=1
     size=2
     nnsize=size
     sol_seed=6
-
-    # consier setting this to be the maximum distance considered...
-    init_flux=4
-    performance_bias=0.01   #0.03
-    performance_update_rate=0.001  #0.05   0.03
-    flux_convergence= 1.5  #1.5
     
-    learning_duration=1000
-
-    save_filename=f"jason/figure2/figure2_data_{learning_duration/1000}k_initflux-{init_flux}.csv"
-    save_dat_filename=f"jason/figure2/figure2_{learning_duration/1000}k_initflux-{init_flux}.dat"
 
     seeds=[0]  #range(10)
-    
     sol_seeds=[1]  #4 is best in 10nnsize
     nnsizes=[2]
     test_duration=10   #?
@@ -75,19 +145,6 @@ def main_perturb_AND_recover():
     orig_fit=fitness_maximize_output_change(best_nn, test_duration=test_duration)
 
     
-
-
-    line="init_fit,final_fit,init_est_dist,final_est_dist,"
-    for i in range(learning_duration+1):
-        line+=f"ARP{i},"
-    
-    if not os.path.exists(save_filename):
-        print("File does not exist, writing to new file")
-        write_to_file( save_filename, line,'w' )
-        write_to_file( save_dat_filename, "",'w' )   #make sure file is created
-        #don't write to .dat file
-        #print(line)
-
     #try systematically perturbing the network 
 
     for w00 in w00s:
@@ -112,22 +169,35 @@ def main_perturb_AND_recover():
 
                     final_fitness, final_ctrnn, arp_timeseries = run_recovery( norm_params, performance_bias=performance_bias, \
                         init_flux=init_flux,\
+                        running_window_mode=running_window_mode, running_window_size=running_window_size,\
                         performance_update_rate=performance_update_rate, nnsize=nnsize,learning_duration=learning_duration,\
                         ignore_transients=ignore_transients   )
                     
                     diff_vec = (best_nn.inner_weights - final_ctrnn.inner_weights )      
                     final_est_dist = np.sqrt( np.sum(diff_vec**2) ) 
+
                     
-                    line2=f"{init_fit},{final_fitness},{init_est_dist},{final_est_dist},{arp_timeseries}"
+
+                    final_w00 = final_ctrnn.inner_weights[0][0]
+                    final_w01 = final_ctrnn.inner_weights[0][1]
+                    final_w10 = final_ctrnn.inner_weights[1][0]
+                    final_w11 = final_ctrnn.inner_weights[1][1]
+                    
+                    line2=f"{init_fit},{final_fitness},{init_est_dist},{final_est_dist},"
+                    line2+=f"{w00},{w01},{w10},{w11},"
+                    line2+=f"{final_w00},{final_w01},{final_w10},{final_w11}"  #",{arp_timeseries}"
+
                     write_to_file( save_filename, line2,'a' )
                     write_to_file( save_dat_filename, line2,'a' )
                     #print(line2)
-                    print( new_ctrnn.inner_weights )
-                    print( f"fit: {init_fit:.4f}->{final_fitness:.4f}  dist: {init_est_dist:.4f}->{final_est_dist:.4f}" ) 
+                    #quit()
+                    #print( new_ctrnn.inner_weights )
+                    #print( f"fit: {init_fit:.4f}->{final_fitness:.4f}  dist: {init_est_dist:.4f}->{final_est_dist:.4f}" ) 
 
 
 def run_recovery( norm_params, init_flux=1, nnsize=2, weight_range=16, bias_range=16,learning_duration=2000, performance_bias=0.005, \
     performance_update_rate=0.002, flux_convergence=1.0, show_plots=False, show_subplots=False, save_recover_data_filename=False,\
+        running_window_mode=True, running_window_size=2000, \
         ignore_transients=0 ):
     
     # Parameters RL-CTRNN specific
@@ -164,6 +234,7 @@ def run_recovery( norm_params, init_flux=1, nnsize=2, weight_range=16, bias_rang
     rl_nn.set_normalized_parameters(norm_params)
 
     task = SimpleOscillatorTask( learning_duration, stepsize, stop_at_convergence, \
+        running_window_mode=running_window_mode, running_window_size=running_window_size, \
         convergence_epsilon=convergence_epsilon, performance_update_rate=performance_update_rate, performance_bias=performance_bias)
 
 
@@ -190,4 +261,7 @@ def write_to_file(save_filename, line, flag='a'):
         filehandle.write( line+"\n" )
     filehandle.close()
 
-main()
+
+
+if __name__ == "__main__":
+    main()

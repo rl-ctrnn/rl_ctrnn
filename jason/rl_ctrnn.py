@@ -33,6 +33,7 @@ class RL_CTRNN( CTRNN ):
 
         # Constants for simulation
         self.init_flux_amp = init_flux_amp
+        print(init_flux_amp)
         self.max_flux_amp = max_flux_amp                        # The largest allowed (+/1-) value of the DISPLACEMENT for ALL synaptic weight fluctuations
         self.flux_period_min = flux_period_min                  # The shortest possible (randomly generated) period for an INDIVIDUAL synaptic weight
         self.flux_period_max = flux_period_max                  # The longest possible (randomly generated) period for an INDIVIDUAL synaptic weight
