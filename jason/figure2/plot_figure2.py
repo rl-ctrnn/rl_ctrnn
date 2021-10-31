@@ -79,6 +79,7 @@ learning_duration=1000
 prefix="v1_12x12x4"
 save_dat_filename=f"{prefix}_fig2_{learning_duration/1000}k_initflux-{init_flux}.dat"
 
+plot_save_filename=f"plots/{prefix}_fig2_{learning_duration/1000}k_initflux-{init_flux}"
 
 
 
@@ -145,8 +146,11 @@ plt.ylabel("final_fit")
 plt.legend(custom_lines, legend_array)
 plt.xlim(0,.8)
 plt.ylim(0,.8)
-
-plt.show()
+plt.rcParams["figure.figsize"] = (8,6)
+plt.savefig(f"{plot_save_filename}_init_fit_X_final_fit.png", dpi=300, \
+                bbox_inches='tight' )
+plt.clf()
+#plt.show()
 
 for index in range(len(data)):
     #init_fit,final_fit,init_est_dist,final_est_dist
@@ -173,7 +177,8 @@ plt.xlabel("init_dist")
 plt.ylabel("final_dist")
 plt.legend(custom_lines, legend_array)
 
-plt.show()
+#plt.show()
+#
 
 for index in range(len(data)):
     #init_fit,final_fit,init_est_dist,final_est_dist
@@ -192,7 +197,11 @@ for index in range(len(data)):
     plt.ylabel("final_fit")
     
 plt.legend(custom_lines, legend_array)
-plt.show()
+#plt.show()
+plt.rcParams["figure.figsize"] = (8,6)
+plt.savefig(f"{plot_save_filename}_init_dist_X_final_fit.png", dpi=300, \
+                bbox_inches='tight' )
+plt.clf()
 
 #ADD PLOT START AND STOP
 #######################################
@@ -227,9 +236,11 @@ for index in range(len(data)):
     plt.ylabel("w11")
     
 plt.legend(custom_lines, legend_array)
-plt.show()
-
-
+#plt.show()
+plt.rcParams["figure.figsize"] = (8,6)
+plt.savefig(f"{plot_save_filename}_w00_X_w11.png", dpi=300, \
+                bbox_inches='tight' )
+plt.clf()
 
 
 
@@ -248,6 +259,9 @@ for index in range(len(data)):
     plt.ylabel("init_fit")
     
 plt.legend(custom_lines, legend_array)
-plt.show()
+#plt.show()
+plt.rcParams["figure.figsize"] = (8,6)
+plt.savefig(f"{plot_save_filename}_init_dist_X_init_fit.png", dpi=300, \
+                bbox_inches='tight' )
 
    
