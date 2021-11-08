@@ -13,11 +13,105 @@ from util.fitness_functions import fitness_maximize_output_change
 
 def main():
     print("inside of xp_perturb_and_recovery.py")
-    main_recovery_sweep()
-    #main_recovery()
+    #metaparameter_sweep()
+    #train_weights_from_starting_files()
+    dir="data/perturbed_networks/nnsize-2_sol-seed-6/seed1/"
+    filename="trial-seed1_fit-perc-0.00__afig1_set_D_4d.json"
+    repeatedly_train_weights_from_starting_file(filename)
+    #rl_discover_new_solutions_using_flux_biases()
     #main_perturb_AND_recover()
 
-def main_recovery():
+
+def rl_discover_new_solutions_using_flux_biases():
+    size=9
+    seed=0
+    #############
+    ignore_transients=100  #20
+    show_plots=False
+    show_subplots=True
+    nnsize=size
+    init_flux=4
+    performance_bias=0.05           #0.03
+    performance_update_rate=0.001   #0.05   0.03
+    flux_convergence= 1.5           #1.5
+    learning_duration=5000  #in seconds
+
+    running_window_mode=True
+    running_window_size=2000   # 2000 = 20 seconds ~= 0.001
+
+
+    
+    random_filename=f"jason/random_size-{size}_seed-{seed}.json"
+
+    save_recover_data_filename=None
+    
+    #1. generate random ctrnn
+    np.random.seed(seed)
+    ctrnn = CTRNN(size)
+    ctrnn.randomize_parameters_with_seed(seed)
+
+    #2. save random ctrnn to file
+    ctrnn.save_json(random_filename)
+
+    #. Call alternative recovery mode on it
+    final_fitness, plot_info = run_recovery( ctrnn.get_normalized_parameters(), \
+            init_flux=init_flux,running_window_mode=running_window_mode, running_window_size=running_window_size, \
+            performance_bias=performance_bias, performance_update_rate=performance_update_rate, \
+            nnsize=nnsize,learning_duration=learning_duration, flux_convergence=flux_convergence, \
+            show_plots=show_plots, show_subplots=show_subplots, save_recover_data_filename=save_recover_data_filename, \
+            ignore_transients=ignore_transients, 
+            flux_bias_mode=True)
+    print( final_fitness )
+
+
+def repeatedly_train_weights_from_starting_file(filename):
+
+    record_array=["performances", "running_average_performances", "outputs", "weights"]
+
+    record_every_n_steps=100
+
+    ignore_transients=100  #20
+    show_plots=False
+    show_subplots=False
+    size=2
+    nnsize=size
+    sol_seed=6
+    init_flux=4
+    performance_bias=0.05           #0.03
+    performance_update_rate=0.001   #0.05   0.03
+    flux_convergence= 1.5           #1.5
+    learning_duration=2000  #in seconds
+
+    running_window_mode=True
+    running_window_size=2000   # 2000 = 20 seconds ~= 0.001
+
+    directory=f"data/perturbed_networks/nnsize-{size}_sol-seed-{sol_seed}/seed1/"
+
+    seeds = range(0,100)
+    
+    for seed in seeds:
+        np.random.seed(seed)
+        print(seed)
+        save_recover_data_directory=f"data/recovered_run_data/nnsize-{size}_sol-seed-{sol_seed}/repeated_4d_init-flux-{init_flux}/"
+        save_recover_data_filename=f"{save_recover_data_directory}recover_seed-{seed}.csv"
+        load_filename=f"{directory}{filename}"
+        ctrnn = CTRNN(size)
+        ctrnn.load_json(load_filename)
+
+        recovered_fitness, plot_info = run_recovery( ctrnn.get_normalized_parameters(), \
+            init_flux=init_flux,running_window_mode=running_window_mode, running_window_size=running_window_size, \
+            performance_bias=performance_bias, performance_update_rate=performance_update_rate, \
+            nnsize=nnsize,learning_duration=learning_duration, flux_convergence=flux_convergence, \
+            show_plots=show_plots, show_subplots=show_subplots, save_recover_data_filename=save_recover_data_filename, \
+            ignore_transients=ignore_transients,
+            record_array=record_array,
+            record_every_n_steps=record_every_n_steps)
+        print( f"{recovered_fitness}     ..    {(plot_info['running_average_performances'][-1]+performance_bias)*100}" )
+
+
+  
+
+def train_weights_from_starting_files():
     ignore_transients=100  #20
     show_plots=False
     show_subplots=True
@@ -29,7 +123,7 @@ def main_recovery():
     performance_bias=0.05           #0.03
     performance_update_rate=0.001   #0.05   0.03
     flux_convergence= 1.5           #1.5
-    learning_duration=1000  #in seconds
+    learning_duration=5000  #in seconds
 
     running_window_mode=True
     running_window_size=2000   # 2000 = 20 seconds ~= 0.001
@@ -60,7 +154,7 @@ def main_recovery():
         print(recovered_fitness)
         quit() #done after 1
 
-def main_recovery_sweep():
+def metaparameter_sweep( ):
     ignore_transients=100  #20
     start=ignore_transients*100
     show_plots=False
@@ -69,8 +163,9 @@ def main_recovery_sweep():
     size=2
     nnsize=size
     sol_seed=6
-    init_flux=2
+    init_flux=4
     flux_period_min=2
+    learning_rate=1
     performance_bias=0.05           #0.03
     performance_update_rate=0.001   #0.05   0.03
     flux_convergence= 1.5           #1.5
@@ -86,35 +181,38 @@ def main_recovery_sweep():
 
 
     pairs=[]
-    pairs.append( ["flux_period_min", [1,2,3,4,5] ]  )
+    param_name="learning_rate"
+    param_vals=[0.25, 0.5, 1, 2, 3, 4, 5]
+    pairs.append( [param_name, param_vals]  )
+    #pairs.append( ["flux_period_min", [1,2,3,4,5] ]  )
 
     param_name="flux_period_min"
     param_vals=[1,2,3,4,5]
-    pairs.append( [param_name, param_vals]  )
+    #pairs.append( [param_name, param_vals]  )
 
     param_name="running_window_size"
     param_vals=np.arange(1000,5000,500)
-    pairs.append( [param_name, param_vals]  )
+    #pairs.append( [param_name, param_vals]  )
 
     param_name="performance_bias"
     param_vals=np.arange(1,11,1)/1000.0
-    pairs.append( [param_name, param_vals]  )
+    #pairs.append( [param_name, param_vals]  )
 
     param_name="init_flux"
-    param_vals=np.arange(10,20,1)/10
-    pairs.append( [param_name, param_vals]  )
+    param_vals=np.arange(10,51,5)/10
+    #pairs.append( [param_name, param_vals]  )
 
     param_name="flux_convergence"
     param_vals=np.arange(4,15,1)/10
-    pairs.append( [param_name, param_vals]  )
+    #pairs.append( [param_name, param_vals]  )
 
     filenames=[]
     #filenames.append("trial-seed1_fit-perc-0.00__fig1_set_A_short.json")
-    filenames.append("trial-seed1_fit-perc-0.00__fig1_set_B_2d_long.json")  #4000
-    filenames.append("trial-seed1_fit-perc-0.00__fig1_set_C_2d_med.json")  #3000
-    filenames.append("trial-seed1_fit-perc-0.00__fig1_set_D_4D.json")  #5000
+    #filenames.append("trial-seed1_fit-perc-0.00__fig1_set_B_2d_long.json")  #4000
+    #filenames.append("trial-seed1_fit-perc-0.00__fig1_set_C_2d_med.json")  #3000
+    filenames.append("trial-seed1_fit-perc-0.00__afig1_set_D_4D.json")  #5000
 
-    learning_duration=5000
+    learning_duration=500
 
     for filename in filenames:
 
@@ -141,6 +239,8 @@ def main_recovery_sweep():
             fig, axs = plt.subplots(2, 2)
             fig.suptitle(f"Comparing different {param_name}")
             for param in param_vals:
+                if param_name=="learning_rate":
+                    learning_rate=param  
                 if param_name=="flux_period_min":
                     flux_period_min=param            
                 if param_name=="running_window_size":
@@ -152,7 +252,7 @@ def main_recovery_sweep():
                 if param_name=="flux_convergence":
                     flux_convergence=param
 
-                save_recover_data_filename=f"{save_recover_data_directory}recover_{filename}__10302021__{param_name}-{param}.csv"
+                save_recover_data_filename=f"{save_recover_data_directory}recover_{filename}__11072021__{param_name}-{param}.csv"
 
                 if os.path.exists(save_recover_data_filename):
                     print("reading file")
@@ -179,15 +279,19 @@ def main_recovery_sweep():
                     recovered_fitness, plot_info = run_recovery( ctrnn.get_normalized_parameters(), \
                         flux_period_min=flux_period_min,\
                         init_flux=init_flux,running_window_mode=running_window_mode, running_window_size=running_window_size, \
+                        learning_rate=learning_rate,\
                         performance_bias=performance_bias, performance_update_rate=performance_update_rate, \
                         nnsize=nnsize,learning_duration=learning_duration, flux_convergence=flux_convergence, \
                         show_plots=show_plots, show_subplots=show_subplots, save_recover_data_filename=save_recover_data_filename, \
                             ignore_transients=ignore_transients)
                 print( param  )
                 ax1 = plt.subplot(2, 2, 1)
+
+                print(  plot_info["amps"] )
+
                 ax1.plot(plot_info["time"][start:],plot_info["amps"][start:], label=f"{param_name}:{param:0.3f}" , color=map_param_to_color(param) )   #" fit={recovered_fitness:0.2f}"
                 ax2 = plt.subplot(2, 2, 2)
-                ax2.plot(plot_info["time"][start:],plot_info["running_average_performances"][start:],label=f"{param_name}:{param:0.2f}", color=map_param_to_color(param) )
+                ax2.plot(plot_info["time"][start:], 100*(plot_info["running_average_performances"][start:]+performance_bias),label=f"{param_name}:{param:0.2f}", color=map_param_to_color(param) )
                 ax1.set_title("Fluctuation Amplitude")
                 ax2.set_title("Running Average Performance")
                 ax1.legend()
@@ -242,9 +346,7 @@ def main_recovery_sweep():
 
 
             print(recovered_fitness)
-        quit() #done after 1
-
-
+        #quit() #done after 1
 
 
 def main_perturb_AND_recover():
@@ -287,11 +389,14 @@ def main_perturb_AND_recover():
                                 write_to_file( save_filename, line2,'a' )
                                 print(line2)
 
-
 def run_recovery( norm_params, init_flux=1, nnsize=2, weight_range=16, bias_range=16,learning_duration=2000, performance_bias=0.005, \
     performance_update_rate=0.002, flux_convergence=1.0, show_plots=False, show_subplots=False, save_recover_data_filename=False,\
         ignore_transients=0, running_window_mode=False, running_window_size=2000,\
-        flux_period_min=4 ):
+        learning_rate=1,\
+        flux_period_min=4, \
+        flux_bias_mode=False,\
+        record_array=None,\
+        record_every_n_steps=None ):
     # Parameters RL-CTRNN specific
     init_flux_amp=init_flux
 
@@ -303,13 +408,20 @@ def run_recovery( norm_params, init_flux=1, nnsize=2, weight_range=16, bias_rang
     flux_period_max=  flux_period_min*2
 
     flux_conv_rate=flux_convergence
-    learn_rate=1.0
+    learn_rate=learning_rate
     # could be tuned
     bias_init_flux_amp=0
     bias_max_flux_amp=0
     bias_flux_period_min=0
     bias_flux_period_max=0
     bias_flux_conv_rate=0
+    if flux_bias_mode:
+        bias_init_flux_amp=init_flux_amp
+        bias_max_flux_amp=max_flux_amp
+        bias_flux_period_min=flux_period_min
+        bias_flux_period_max=flux_period_max
+        bias_flux_conv_rate=flux_conv_rate
+
 
 
 
@@ -343,18 +455,20 @@ def run_recovery( norm_params, init_flux=1, nnsize=2, weight_range=16, bias_rang
     save_data_filename=save_recover_data_filename
 
     nn, plot_info, converged = task.simulate(rl_nn, ignore_transients=ignore_transients, \
-        show_plots=show_plots, show_subplots=show_subplots,  record_data=True, save_data_filename=save_data_filename,\
+        show_plots=show_plots, show_subplots=show_subplots,  record_data=True, \
+        record_array=record_array,\
+        record_every_n_steps=record_every_n_steps,\
+        save_data_filename=save_data_filename,\
         save_nn_snapshots=save_nn_snapshots,  ctrnn_save_directory=ctrnn_save_directory)
     ctrnn = CTRNN(nnsize, weight_range=weight_range, bias_range=bias_range, tc_min=tc_min, tc_max=tc_max )
     ctrnn.set_normalized_parameters( nn.get_normalized_parameters() )
     recovered_fitness = fitness_maximize_output_change( ctrnn) 
     return recovered_fitness, plot_info
     
-
-
 def write_to_file(save_filename, line, flag='a'):
     with open( save_filename, flag) as filehandle:
         filehandle.write( line+"\n" )
     filehandle.close()
 
-main()
+if __name__ == "__main__":
+    main()

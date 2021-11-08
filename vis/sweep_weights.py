@@ -17,7 +17,7 @@ from tqdm.contrib.concurrent import process_map
 
 THREAD_COUNT = 10
 BOUNDS = 16.0
-STEP = .25
+STEP = .5
 
 size=2
 seed=6
@@ -26,10 +26,10 @@ filename = f"data/evolved_solutions/mga_pop-20_gen-1000/ALL/discovery_mga_best_n
 
 
 
-WEIGHT_A = (0, 1)
+WEIGHT_A = (0, 0)
 WEIGHT_B = (1, 0)
 LOG_OUTPUT = True
-save_filename=f"fitness_{WEIGHT_A[0]}_{WEIGHT_A[1]}__{WEIGHT_B[0]}_{WEIGHT_B[1]}.csv"
+save_filename=f"10sec_fitness_{WEIGHT_A[0]}_{WEIGHT_A[1]}__{WEIGHT_B[0]}_{WEIGHT_B[1]}.csv"
 
 
 def get_sweep(step: float = STEP, bounds: float = BOUNDS) :
@@ -50,7 +50,7 @@ def main(param):
     ctrnn.inner_weights[ WEIGHT_A[0] ][ WEIGHT_A[1] ] = param[0]
     ctrnn.inner_weights[ WEIGHT_B[0] ][ WEIGHT_B[1] ] = param[1]
 
-    fitness = fitness_maximize_output_change(ctrnn, init_duration=250, test_duration=50)
+    fitness = fitness_maximize_output_change(ctrnn, init_duration=0, test_duration=10)
     datum = (param[0], param[1], fitness)
 
     if LOG_OUTPUT:
