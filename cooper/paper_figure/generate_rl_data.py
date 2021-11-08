@@ -40,7 +40,7 @@ def repeatedly_train_weights_from_starting_file(filename):
     running_window_mode=True
     running_window_size=2000   # 2000 = 20 seconds ~= 0.001
 
-    directory=f"cooper/figure2/"
+    directory=f"cooper/paper_figure/"
 
     #how many times to run the simulation
     seeds = range(0,100)
@@ -48,7 +48,7 @@ def repeatedly_train_weights_from_starting_file(filename):
     for seed in seeds:
         np.random.seed(seed)
         print(seed)
-        save_recover_data_directory=f"cooper/figure2/rl_data/"
+        save_recover_data_directory=f"cooper/paper_figure/rl_data/"
         save_recover_data_filename=f"{save_recover_data_directory}recover_seed-{seed}.csv"
         load_filename=f"{directory}{filename}"
         ctrnn = CTRNN(size)

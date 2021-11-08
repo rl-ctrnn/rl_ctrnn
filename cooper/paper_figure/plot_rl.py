@@ -11,13 +11,13 @@ from vis.plot_rl_figures import plot_from_file
 
 def main():
 
-    filename="cooper/figure2/rl_data/recover_seed-0.csv"
+    filename="cooper/paper_figure/rl_data/recover_seed-0.csv"
     plot_from_file(filename,reduce_plot_data=1, stepsize=1)
     
-    directory="cooper/figure2/rl_data/"
-    plot_agg_from_files(directory, max_entries=-1)
+    directory="cooper/paper_figure/rl_data/"
+    plot_agg_from_files(directory )
 
-def plot_agg_from_files(directory, max_entries=-1):
+def plot_agg_from_files(directory, max_entries=None):
     
     ignore_transients=100
     perf_bias = 0.05
@@ -25,9 +25,10 @@ def plot_agg_from_files(directory, max_entries=-1):
 
     filenames = os.listdir(directory)
     agg_dict={}
-    #print(  filenames )
+    if max_entries != None:
+        filenames = filenames[:max_entries]
 
-    for filename in filenames[:max_entries]:
+    for filename in filenames:
         print(filename)
         label_to_data_map=plot_from_file(f"{directory}{filename}", show_subplots=False)
         for key in label_to_data_map.keys():
