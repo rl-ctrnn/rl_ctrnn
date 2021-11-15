@@ -154,6 +154,9 @@ def train_weights_from_starting_files():
         print(recovered_fitness)
         quit() #done after 1
 
+
+
+
 def metaparameter_sweep( ):
     ignore_transients=100  #20
     start=ignore_transients*100

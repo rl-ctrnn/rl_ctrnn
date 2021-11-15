@@ -82,7 +82,7 @@ def plot_agg_from_files(directory, max_entries=-1):
 
 
 
-def plot_from_file(filename, reduce_plot_data=10, stepsize=100, show_subplots=True):
+def plot_from_file(filename, perf_bias = 0.05, reduce_plot_data=10, stepsize=100, show_subplots=True):
     
     data = np.genfromtxt(filename,delimiter=",", dtype=float, names=True)
     length=len(data)
@@ -126,12 +126,12 @@ def plot_from_file(filename, reduce_plot_data=10, stepsize=100, show_subplots=Tr
                 label_to_data_map["flux_weights"][i][j]=label_to_data_map[f"flux_w{i}_{j}"]
     
     if "bias0" in labels:
-        label_to_data_map["biases"]=np.zeros( (size,size,length ) )
+        label_to_data_map["biases"]=np.zeros( (size,length ) )
         for i in range(size):
             label_to_data_map["biases"][i]=label_to_data_map[f"bias{i}"]
     
     if "flux_bias0" in labels:
-        label_to_data_map["flux_biases"]=np.zeros( (size,size,length ) )
+        label_to_data_map["flux_biases"]=np.zeros( (size,length ) )
         for i in range(size):
             label_to_data_map["flux_biases"][i]=label_to_data_map[f"flux_bias{i}"]
     
@@ -144,7 +144,7 @@ def plot_from_file(filename, reduce_plot_data=10, stepsize=100, show_subplots=Tr
     #plt.show()
     if show_subplots:
         subplots(None, label_to_data_map, label_to_data_map["time"], -1, reduce_plot_data=reduce_plot_data,\
-            stepsize=stepsize)
+            stepsize=stepsize, perf_bias = 0.05,)
 
     return label_to_data_map
     #plot(None, label_to_data_map, label_to_data_map["time"], -1, None)
@@ -262,7 +262,7 @@ def plot(osc_exp, plot_info, time, stop_step, reduce_plot_data=100):
         plt.show()
 
 
-def subplots(osc_exp, plot_info, time, stop_step, reduce_plot_data=1, stepsize=100):
+def subplots(osc_exp, plot_info, time, stop_step, reduce_plot_data=1, stepsize=100, perf_bias = None,):
 
     #reduce_plot_data=10
 
@@ -308,8 +308,15 @@ def subplots(osc_exp, plot_info, time, stop_step, reduce_plot_data=1, stepsize=1
     if "amps" in plot_info.keys():
         ax1.plot(time[start_step:stop_step:reduce_plot_data],plot_info["amps"][start_step:stop_step:reduce_plot_data],label="flux amplitude",color=ampcolor )
     #ax1.set_ylim(0,8)
-    ax2.plot(time[start_step:stop_step:reduce_plot_data],plot_info["performances"][start_step:stop_step:reduce_plot_data],label="instantaneous", color=instcolor )
-    ax2.plot(time[start_step:stop_step:reduce_plot_data],plot_info["running_average_performances"][start_step:stop_step:reduce_plot_data],label="running average", color=runavecolor )
+
+    perf_data=plot_info["performances"][start_step:stop_step:reduce_plot_data]
+    run_ave_perf_data=plot_info["running_average_performances"][start_step:stop_step:reduce_plot_data]
+    if perf_bias != None:
+        perf_data = 100*(perf_bias+perf_data)
+        run_ave_perf_data=100*(perf_bias+run_ave_perf_data)
+
+    ax2.plot(time[start_step:stop_step:reduce_plot_data], perf_data ,label="instantaneous", color=instcolor )
+    ax2.plot(time[start_step:stop_step:reduce_plot_data], run_ave_perf_data,label="running average", color=runavecolor )
 
     ax1.set_ylabel("Flux Size",color='r',labelpad=-40)
     ax2.set_ylabel("Performance", color='b',labelpad=-60)

@@ -202,8 +202,8 @@ class SimpleOscillatorTask():
                 if record_array == None or "performances" in record_array:
                     plot_info["performances"] = self.performances
             else:
-                
-                plot_info["amps"] = plot_info["amps"][::record_every_n_steps]
+                if record_array == None or "amps" in record_array:
+                    plot_info["amps"] = plot_info["amps"][::record_every_n_steps]
                 
                 if record_array == None or "weights" in record_array:
                     plot_info["weights"] = plot_info["weights"][::record_every_n_steps].transpose(1,2,0)

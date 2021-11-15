@@ -18,6 +18,8 @@ def main():
     plot_agg_from_files(directory )
 
 def plot_agg_from_files(directory, max_entries=None):
+
+    save_folder="cooper/paper_figure/plots/"
     
     ignore_transients=100
     perf_bias = 0.05
@@ -59,6 +61,7 @@ def plot_agg_from_files(directory, max_entries=None):
         plt.fill_between(agg_dict["time"][0][ignore_transients:], (avg-err)[ignore_transients:], (avg+err)[ignore_transients:], alpha=0.2)
         plt.xlabel("Time")
         plt.ylabel(perf)
+        plt.savefig(f"{save_folder}{perf}.png")
         plt.show()
 
 
