@@ -82,7 +82,7 @@ def plot_agg_from_files(directory, max_entries=-1):
 
 
 
-def plot_from_file(filename, perf_bias = 0.05, reduce_plot_data=10, stepsize=100, show_subplots=True):
+def plot_from_file(filename, size=2, perf_bias = 0.05, reduce_plot_data=10, stepsize=100, show_subplots=True):
     
     data = np.genfromtxt(filename,delimiter=",", dtype=float, names=True)
     length=len(data)
@@ -105,7 +105,6 @@ def plot_from_file(filename, perf_bias = 0.05, reduce_plot_data=10, stepsize=100
         label_to_data_map[data.dtype.names[i]]=plot_data[i]
     #label_to_data_map["time"] = data series for time...
     #post-processing outputs, weights, etc
-    size=2
 
     
     if "outputs" in labels:
@@ -144,7 +143,7 @@ def plot_from_file(filename, perf_bias = 0.05, reduce_plot_data=10, stepsize=100
     #plt.show()
     if show_subplots:
         subplots(None, label_to_data_map, label_to_data_map["time"], -1, reduce_plot_data=reduce_plot_data,\
-            stepsize=stepsize, perf_bias = 0.05,)
+            stepsize=stepsize, perf_bias = perf_bias, size=size)
 
     return label_to_data_map
     #plot(None, label_to_data_map, label_to_data_map["time"], -1, None)
@@ -262,7 +261,7 @@ def plot(osc_exp, plot_info, time, stop_step, reduce_plot_data=100):
         plt.show()
 
 
-def subplots(osc_exp, plot_info, time, stop_step, reduce_plot_data=1, stepsize=100, perf_bias = None,):
+def subplots(osc_exp, plot_info, time, stop_step, reduce_plot_data=1, stepsize=100, perf_bias = None, size=None):
 
     #reduce_plot_data=10
 
@@ -278,6 +277,8 @@ def subplots(osc_exp, plot_info, time, stop_step, reduce_plot_data=1, stepsize=1
         nnsize=2
     else:
         nnsize = len(plot_info["outputs"])
+    if size!=None:
+        nnsize=size
 
     rows=3
     cols=2
