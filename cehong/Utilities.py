@@ -7,7 +7,7 @@
 # This is the utilities file that contains many functions needed in other files
 
 
-from ctrnn import CTRNN
+from jason.ctrnn import CTRNN
 import numpy as np
 import matplotlib.pyplot as plt 
 import pandas as pd
